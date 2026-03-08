@@ -10,8 +10,6 @@ const execCommand = () => {
   // Exit with same code as child
 
   const [,, command, ...commandArgs] = process.argv;
-  console.log(command, commandArgs)
-
   if (!command) {
     console.log('Please enter command');
     process.exit(1)
@@ -20,6 +18,7 @@ const execCommand = () => {
   const spawnedProcess = spawn(command, commandArgs, {
     env: process.env,
     stdio: ['inherit', 'pipe', 'pipe'],
+    shell: true
   });
 
   // Can be done automatically with 'inherit' in stdio, but I added it here to try manual piping 

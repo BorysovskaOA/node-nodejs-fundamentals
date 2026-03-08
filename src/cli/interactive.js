@@ -18,18 +18,18 @@ const interactive = () => {
       switch (answer.toLocaleLowerCase().trim()) {
         case 'yes':
         case 'y': {
-          console.log('Ok. Goodbye')
+          console.log('Goodbye')
           readlineInstance.close()
           break;
         }
         case 'no':
         case 'n': {
-          console.log('Ok. Please continue');
+          console.log('Please continue');
           readlineInstance.prompt();
           break;
         }
         default:
-          console.log('Unknown command. Please anwser the question:');
+          console.log('Unknown answer. Please anwser the question:');
           confirmQuestion();
       }
     });
@@ -41,14 +41,17 @@ const interactive = () => {
     switch (line.trim()) {
       case 'uptime': {
         console.log(process.uptime());
+        readlineInstance.prompt();
         break;
       }
       case 'cwd': {
         console.log(process.cwd());
+        readlineInstance.prompt();
         break;
       }
       case 'date': {
         console.log(new  Date);
+        readlineInstance.prompt();
         break;
       }
       case 'exit': {
@@ -57,9 +60,9 @@ const interactive = () => {
       }
       default: {
         console.log('Unknown command');
+        readlineInstance.prompt();
       }
     }
-    readlineInstance.prompt();
   });
 };
 
