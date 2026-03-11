@@ -1,4 +1,4 @@
-import { readFile, mkdir, readdir, stat } from 'node:fs/promises';
+import { readFile, mkdir, readdir } from 'node:fs/promises';
 import { createWriteStream } from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
@@ -8,6 +8,18 @@ import { createBrotliCompress } from 'node:zlib';
 
 const HEADER_SIZE = 12;
 
+const getFiles = async (dir) => {
+  try {
+    const entries = await readdir(dir, { withFileTypes: true, recursive: true });
+    const files = await Promise.all(entries.map(async (entry) => {
+      const res = path.join(dir, entry.name);
+      return entry.isDirectory() ? [] : res;
+    }));
+    return files.flat();
+  } catch {
+    throw new Error(`FS operation failed: ${dir} is not a directory`);
+  }
+};
 
 const compressDir = async () => {
   // Write your code here
@@ -21,15 +33,6 @@ const compressDir = async () => {
   const outputFile = path.join(targetDir, 'archive.br');
 
   await mkdir(targetDir, { recursive: true });
-
-  const getFiles = async (dir) => {
-    const entries = await readdir(dir, { withFileTypes: true });
-    const files = await Promise.all(entries.map(async (entry) => {
-      const res = path.join(dir, entry.name);
-      return entry.isDirectory() ? getFiles(res) : res;
-    }));
-    return files.flat();
-  };
 
   const allFiles = await getFiles(sourceDir);
 

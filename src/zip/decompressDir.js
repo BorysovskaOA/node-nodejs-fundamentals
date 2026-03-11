@@ -1,9 +1,11 @@
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile, access } from 'node:fs/promises';
 import { createReadStream } from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import { pipeline } from 'node:stream/promises';
 import { createBrotliDecompress } from 'node:zlib';
+
+const HEADER_SIZE = 12;
 
 const decompressDir = async () => {
   // Write your code here
@@ -13,9 +15,14 @@ const decompressDir = async () => {
 
   const archive = path.join(process.cwd(), 'workspace/compressed/archive.br');
   const targetDir = path.join(process.cwd(), 'workspace/decompressed');
-  
-  const HEADER_SIZE = 12;
 
+  try {
+    await access(archive);
+  } catch (error) {
+    console.log(error);
+    throw new Error(`FS operation failed: No file ${archive}`);
+  }
+  
   try {
     await pipeline(
       createReadStream(archive),
