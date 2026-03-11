@@ -9,13 +9,14 @@ const execCommand = () => {
   // Pass environment variables
   // Exit with same code as child
 
-  const [,, command, ...commandArgs] = process.argv;
-  if (!command) {
+  const [,, ...commandArg] = process.argv;
+  if (!commandArg) {
     console.log('Please enter command');
     process.exit(1)
   }
-
-  const spawnedProcess = spawn(command, commandArgs, {
+  
+  const command = commandArg.join(' ');
+  const spawnedProcess = spawn(command, {
     env: process.env,
     stdio: ['inherit', 'pipe', 'pipe'],
     shell: true
@@ -25,14 +26,12 @@ const execCommand = () => {
   spawnedProcess.stdout.pipe(process.stdout);
   spawnedProcess.stderr.pipe(process.stderr);
 
-
   spawnedProcess.on('exit', (code) => {
-    console.log(`Spawned process exited with code: ${code ?? 1}`);
     process.exit(code ?? 1);
   })
 
   spawnedProcess.on('error', (error) => {
-    console.log(`Error in spawned process:`);
+    console.log(`Error in handling spawned process:`);
     console.error(error);
     process.exit(1);
   })

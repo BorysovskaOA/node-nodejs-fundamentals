@@ -1,6 +1,48 @@
-import fs from 'node:fs';
+import fs from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
+import { getArg } from '../utils/getArg.js';
+
+const getValidArgFilePaths = async (filesArg, dirPath) => {
+  const fileNames = filesArg.split(',');
+    const filePaths = fileNames.map(name => path.join(dirPath, name.trim()));
+
+    try {
+      await Promise.all(filePaths.map((filePath) => fs.access(filePath, fs.constants.F_OK)));
+    } catch {
+      throw new Error(`FS operation failed: No file from arguments`)
+    }
+
+    return filePaths;
+}
+
+const getDefaultFilePaths = async (dirPath) => {
+  try {
+    const files = await fs.readdir(dirPath, { withFileTypes: true });
+
+    const filePaths = files.filter(file => file.isFile() && file.name.endsWith('.txt'))
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .map(file => path.join(dirPath, file.name));
+
+      if (files.length === 0) {
+        throw new Error(`FS operation failed: No files in folder ${dirPath}`)
+      }
+
+      return filePaths;
+  } catch {
+    throw new Error(`FS operation failed: No folder ${dirPath}`)
+  }
+}
+
+const getFilesToMerge = (dirPath) => {
+  const filesArg = getArg('files');
+
+  if (filesArg) {
+    return getValidArgFilePaths(filesArg, dirPath);
+  } else {
+    return getDefaultFilePaths(dirPath)
+  }
+}
 
 const merge = async () => {
   // Write your code here
@@ -9,41 +51,22 @@ const merge = async () => {
   // Concatenate content and write to workspace/merged.txt
 
   const partsDir = path.join(process.cwd(), 'workspace/parts');
-  const filesArg = process.argv.find(arg => arg.startsWith('--files='))?.split('=')[1];
-  let filesToProcess = [];
+  const filesToMerge = await getFilesToMerge(partsDir);
 
-  if (filesArg) {
-    const fileNames = filesArg.split(',');
-    filesToProcess = fileNames.map(name => path.join(partsDir, name.trim()));
-  } else {
-    if (!fs.existsSync(partsDir)) {
-      console.error('Directory parts not found');
-      process.exit(1);
-    }
-
-    filesToProcess = fs.readdirSync(partsDir)
-      .filter(file => file.endsWith('.txt'))
-      .sort()
-      .map(file => path.join(partsDir, file));
-  }
-
-  const content = filesToProcess
-    .filter(filePath => fs.existsSync(filePath))
-    .map(filePath => fs.readFileSync(filePath, 'utf-8'))
-    .join('\n'); 
+  const fileContents = await Promise.all(filesToMerge.map((filePath) => {
+    return fs.readFile(filePath, { encoding: 'utf-8'});
+  }));
   
   try {
     const outputFile = path.join(process.cwd(), 'workspace/merged.txt');
-
     const outputDir = path.dirname(outputFile);
-    if (!fs.existsSync(outputDir)) {
-      fs.mkdirSync(outputDir, { recursive: true });
-    }
 
-    fs.writeFileSync(outputFile, content);
+    await fs.mkdir(outputDir, { recursive: true });
+
+    await fs.writeFile(outputFile, fileContents.join('\n'));
     console.log(`Completed`);
-  } catch (error) {
-    console.error('Failed to write merged file:', error.message);
+  } catch {
+    console.error('FS operation failed: Failed to write merged file');
   }
 };
 

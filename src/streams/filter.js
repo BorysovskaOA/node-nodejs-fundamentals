@@ -1,5 +1,6 @@
 import { Transform } from 'node:stream';
 import process from 'node:process';
+import { getArg } from '../utils/getArg.js';
 
 const filter = () => {
   // Write your code here
@@ -8,12 +9,7 @@ const filter = () => {
   // Use Transform Stream
   // Write to process.stdout
 
-  const patternArg = process.argv.find(arg => arg.startsWith('--pattern='))?.split('=')[1];
-
-  if (!patternArg) {
-    process.stderr.write('Error: no pattern');
-    process.exit(1);
-  }
+  const pattern = getArg('pattern', true);
 
   const filterTransform = new Transform({
     transform(chunk, _, callback) {

@@ -1,4 +1,5 @@
 import process from "node:process";
+import { getArg } from '../utils/getArg.js';
 
 const ansiColorReset = '\x1b[0m';
 function hexColorToAnsi(hex) {
@@ -18,23 +19,21 @@ function hexColorToAnsi(hex) {
   return `\x1b[38;2;${r};${g};${b}m`;
 }
 
-const writeProgressInPlace = (persent, size, color) => {
+const writeProgressInPlace = (persent, length, color) => {
   if (persent > 100 || persent < 0) {
     throw new Error('Invalid persentage')
   }
   const filledChar = "█";
   const emptyChar = " ";
   const ansiColor = hexColorToAnsi(color);
-
   
-  const filledAmount = Math.floor(persent / 100 * size);
-  const emptyAmount = size - filledAmount;
+  const filledAmount = Math.floor(persent / 100 * length);
+  const emptyAmount = length - filledAmount;
   const bar = `${filledChar.repeat(filledAmount)}${emptyChar.repeat(emptyAmount)}`;
   const coloredBar = ansiColor? `${ansiColor}${bar}${ansiColorReset}` : bar;
 
   process.stdout.write(`\r[${coloredBar}] ${persent}%`);
 }
-
 
 const progress = () => {
   // Write your code here
@@ -42,32 +41,38 @@ const progress = () => {
   // Update in place using \r every 100ms
   // Format: [████████████████████          ] 67%
 
-  const colorArg = process.argv.find(arg => arg.startsWith('--color'))?.split('=')?.[1];
-  const sizeArg = process.argv.find(arg => arg.startsWith('--size'))?.split('=')?.[1];
-  const timeArg = process.argv.find(arg => arg.startsWith('--time'))?.split('=')?.[1];
+  const colorArg = getArg('color');
+  const lengthArg = getArg('length');
+  const durationArg = getArg('duration');
+  const intervalArg = getArg('interval');
 
-  const time = timeArg && !Number.isNaN(timeArg) ? Number(timeArg): 5000;
-  const size = sizeArg && !Number.isNaN(sizeArg) ? Number(sizeArg): 30;
+  const duration = durationArg && !Number.isNaN(durationArg) ? Number(durationArg): 5000;
+  const interval = intervalArg && !Number.isNaN(intervalArg) ? Number(intervalArg): 5000;
+  const length = lengthArg && !Number.isNaN(lengthArg) ? Number(lengthArg): 30;
   const startTime = new Date();
 
-  if (time < 5000 || 10000 < time ) {
-    throw Error('Time should be in range [5s, 10s]');
+  // This is my personal addition to validate data
+  if (duration < 3000 || 10000 < duration) {
+    throw Error('Duration should be in range [3s, 10s]');
   }
-  if (size < 10 || 50 < size) {
-    throw Error('Size should be in range [10, 50]');
+  if (intereval < 50 || 300 < intereval) {
+    throw Error('Interval should be in range [50ms, 300ms]');
+  }
+  if (length < 10 || 50 < length) {
+    throw Error('Length should be in range [10, 50]');
   }
 
   const intereval = setInterval(() => {
-    const timeDiff = Math.min(new Date() - startTime, time);
-    const timeDiffPersent = timeDiff ? Math.round(timeDiff * 100 / time) : 0;
+    const durationDiff = Math.min(new Date() - startTime, duration);
+    const durationDiffPersent = durationDiff ? Math.round(durationDiff * 100 / duration) : 0;
 
-    writeProgressInPlace(timeDiffPersent, size, colorArg);
+    writeProgressInPlace(durationDiffPersent, length, colorArg);
 
-    if (time <= timeDiff) {
+    if (duration <= durationDiff) {
       clearInterval(intereval);
       process.stdout.write('\n');
     }
-  }, 100);
+  }, interval);
 };
 
 progress();

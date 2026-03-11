@@ -16,7 +16,7 @@ const lineNumberer = () => {
 
       const numberedLines = lines
         .filter(line => line.length > 0)
-        .map(line => `${count++} ${line}`)
+        .map(line => `${count++} | ${line}`)
         .join('\n');
 
       if (numberedLines) {

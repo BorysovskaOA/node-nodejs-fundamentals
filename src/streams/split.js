@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import readline from 'node:readline';
 import process from 'node:process';
+import { getArg } from '../utils/getArg.js';
 
 const split = async () => {
   // Write your code here
@@ -12,8 +13,8 @@ const split = async () => {
   const sourceFile = path.join(process.cwd(), 'workspace/source.txt');
   const outputDir = path.join(process.cwd(), 'workspace');
 
-  const linesArg = process.argv.find(arg => arg.startsWith('--lines='));
-  const maxLines = linesArg ? parseInt(linesArg.split('=')[1], 10) : 10;
+  const linesArg = getArg('lines');
+  const maxLines = linesArg && !Number.isNaN(linesArg) ? Number(linesArg): 10;
 
   if (!fs.existsSync(sourceFile)) {
     throw new Error('No source file');
@@ -28,7 +29,7 @@ const split = async () => {
   let chunkIndex = 1;
   let writeStream = null;
 
-  for await (const line of rl) {
+  rl.on('line', (line) => {
     if (currentLineCount % maxLines === 0) {
       if (writeStream) writeStream.end();
       writeStream = fs.createWriteStream(path.join(outputDir, `chunk_${chunkIndex++}.txt`));
@@ -36,9 +37,11 @@ const split = async () => {
 
     writeStream.write(line + '\n');
     currentLineCount++;
-  }
+  });
 
   if (writeStream) writeStream.end();
+
+  console.log('Completed');
 };
 
 await split();

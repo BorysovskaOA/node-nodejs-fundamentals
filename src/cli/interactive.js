@@ -7,35 +7,12 @@ const interactive = () => {
   // Support commands: uptime, cwd, date, exit
   // Handle Ctrl+C and unknown commands
 
-  const readlineInstance = readline.createInterface({input: process.stdin, output: process.stdout });
+  const readlineInstance = readline.createInterface({
+    input: process.stdin, 
+    output: process.stdout,
+  });
 
   readlineInstance.prompt();
-
-  readlineInstance.on('SIGINT', () => {
-    console.log('Pressed Ctrl+C');
-
-    const confirmQuestion = () => readlineInstance.question('Are you sure that you want to end session?(yes/y/no/n)', (answer) => {
-      switch (answer.toLocaleLowerCase().trim()) {
-        case 'yes':
-        case 'y': {
-          console.log('Goodbye')
-          readlineInstance.close()
-          break;
-        }
-        case 'no':
-        case 'n': {
-          console.log('Please continue');
-          readlineInstance.prompt();
-          break;
-        }
-        default:
-          console.log('Unknown answer. Please anwser the question:');
-          confirmQuestion();
-      }
-    });
-    
-    confirmQuestion();
-  });
 
   readlineInstance.on('line', (line) => {
     switch (line.trim()) {
@@ -63,6 +40,11 @@ const interactive = () => {
         readlineInstance.prompt();
       }
     }
+  });
+
+  readlineInstance.on('close', () => {
+    console.log('Goodbye!')
+    readlineInstance.close()
   });
 };
 
